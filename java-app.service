@@ -1,0 +1,19 @@
+[Unit]
+Description=Java Application Service (Spring Boot)
+After=network.target
+
+[Service]
+Type=simple
+User=java-runner
+
+# Thuc thi mo phong ung dung Java (in log xac nhan user va chay nen)
+# Trong moi truong san pham thuc te, su dung lenh chay jar nhu sau:
+# ExecStart=/usr/bin/java -jar /opt/app/app.jar
+ExecStart=/bin/bash -c "echo 'Java application started successfully under user: '$(whoami); exec /usr/bin/sleep 3600"
+
+# Chinh sach tu dong khoi dong lai khi gap su co
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

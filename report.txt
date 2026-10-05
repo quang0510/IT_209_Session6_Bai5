@@ -1,0 +1,80 @@
+================================================================================
+BÁO CÁO THỰC HIỆN BÀI 5: THIẾT KẾ VÀ CẤU HÌNH SYSTEMD SERVICE CHO ỨNG DỤNG JAVA
+================================================================================
+
+1. TỔNG QUAN CẤU HÌNH
+- Tên dịch vụ: java-app.service
+- Đường dẫn file service: /etc/systemd/system/java-app.service
+- Tài khoản thực thi: java-runner (tài khoản hệ thống không có quyền đăng nhập shell)
+  Lệnh tạo: sudo useradd -r -s /usr/sbin/nologin java-runner
+- Chính sách restart: on-failure, RestartSec=10s
+- Mô phỏng ứng dụng Java: Chạy lệnh xuất log khởi tạo với user hiện tại và duy trì tiến trình bằng sleep 3600.
+
+--------------------------------------------------------------------------------
+2. NỘI DUNG TỆP CẤU HÌNH /etc/systemd/system/java-app.service
+--------------------------------------------------------------------------------
+[Unit]
+Description=Java Application Service (Spring Boot)
+After=network.target
+
+[Service]
+Type=simple
+User=java-runner
+
+# Thuc thi mo phong ung dung Java (in log xac nhan user va chay nen)
+# Trong moi truong san pham thuc te, su dung lenh chay jar nhu sau:
+# ExecStart=/usr/bin/java -jar /opt/app/app.jar
+ExecStart=/bin/bash -c "echo 'Java application started successfully under user: '$(whoami); exec /usr/bin/sleep 3600"
+
+# Chinh sach tu dong khoi dong lai khi gap su co
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+
+--------------------------------------------------------------------------------
+3. KẾT QUẢ THỰC THI LỆNH: sudo systemctl status java-app.service
+--------------------------------------------------------------------------------
+● java-app.service - Java Application Service (Spring Boot)
+     Loaded: loaded (/etc/systemd/system/java-app.service; disabled; preset: enabled)
+     Active: active (running) since Mon 2026-10-05 19:09:06 +07; 1s ago
+ Invocation: 2b4b8b5919c448649ad32ff4d0a10e77
+   Main PID: 624 (sleep)
+      Tasks: 1 (limit: 19006)
+     Memory: 1.5M (peak: 2M)
+        CPU: 6ms
+     CGroup: /system.slice/java-app.service
+             └─624 /usr/bin/sleep 3600
+
+Oct 05 19:09:06 QuangNguyen systemd[1]: Started java-app.service - Java Application Service (Spring Boot).
+Oct 05 19:09:06 QuangNguyen bash[624]: Java application started successfully under user: java-runner
+
+--------------------------------------------------------------------------------
+4. KẾT QUẢ TRUY VẤN NHẬT KÝ LOG: sudo journalctl -u java-app.service
+--------------------------------------------------------------------------------
+Oct 05 19:08:23 QuangNguyen systemd[1]: Started java-app.service - Java Application Service.
+Oct 05 19:08:24 QuangNguyen bash[530]: Java application started successfully under user: java-runner
+Oct 05 19:08:33 QuangNguyen systemd[1]: java-app.service: Main process exited, code=killed, status=9/KILL
+Oct 05 19:08:33 QuangNguyen systemd[1]: java-app.service: Failed with result 'signal'.
+Oct 05 19:08:43 QuangNguyen systemd[1]: java-app.service: Scheduled restart job, restart counter is at 1.
+Oct 05 19:08:43 QuangNguyen systemd[1]: Started java-app.service - Java Application Service.
+Oct 05 19:08:43 QuangNguyen bash[550]: Java application started successfully under user: java-runner
+Oct 05 19:09:06 QuangNguyen systemd[1]: Started java-app.service - Java Application Service (Spring Boot).
+Oct 05 19:09:06 QuangNguyen bash[624]: Java application started successfully under user: java-runner
+
+--------------------------------------------------------------------------------
+5. KIỂM TRA QUYỀN TIẾN TRÌNH USER: ps -u java-runner -o pid,user,comm,args
+--------------------------------------------------------------------------------
+    PID USER     COMMAND         COMMAND
+    624 java-ru+ sleep           /usr/bin/sleep 3600
+
+--------------------------------------------------------------------------------
+6. ĐÁNH GIÁ KẾT QUẢ THEO YÊU CẦU ĐỀ BÀI
+--------------------------------------------------------------------------------
+[x] Tài khoản java-runner được tạo thành công với cờ -r (system user) và -s /usr/sbin/nologin (chặn đăng nhập shell).
+[x] Tệp cấu hình /etc/systemd/system/java-app.service đầy đủ các khối [Unit], [Service], [Install].
+[x] Quyền thực thi dưới user java-runner (User=java-runner).
+[x] Trạng thái dịch vụ đạt Active: active (running).
+[x] Log journalctl ghi nhận tiến trình được thực thi dưới quyền user java-runner.
+[x] Chính sách khởi động lại (Restart=on-failure, RestartSec=10s) hoạt động chính xác khi mô phỏng tiến trình bị dừng đột ngột (kill -9).

@@ -1,0 +1,13 @@
+● java-app.service - Java Application Service (Spring Boot)
+     Loaded: loaded (/etc/systemd/system/java-app.service; disabled; preset: enabled)
+     Active: active (running) since Mon 2026-10-05 19:09:06 +07; 1s ago
+ Invocation: 2b4b8b5919c448649ad32ff4d0a10e77
+   Main PID: 624 (sleep)
+      Tasks: 1 (limit: 19006)
+     Memory: 1.5M (peak: 2M)
+        CPU: 6ms
+     CGroup: /system.slice/java-app.service
+             └─624 /usr/bin/sleep 3600
+
+Oct 05 19:09:06 QuangNguyen systemd[1]: Started java-app.service - Java Application Service (Spring Boot).
+Oct 05 19:09:06 QuangNguyen bash[624]: Java application started successfully under user: java-runner
